@@ -9,7 +9,6 @@ import uuid
 import csv
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta, timezone
-from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import quote
@@ -17,6 +16,7 @@ from urllib.parse import quote
 import requests
 import xml.etree.ElementTree as ET
 from dotenv import load_dotenv
+from .crawling import policy_crawler
 
 log = logging.getLogger("mining_demo")
 ROOT = Path(__file__).resolve().parents[2]
@@ -108,15 +108,20 @@ class OfficialPolicyProvider:
         ("Rare Earth Management Regulation", "https://www.gov.cn/zhengce/content/202406/content_6960153.htm", "2024-06-29", "State Council of the People's Republic of China"),
     ]
 
+    def __init__(self, crawler=None):
+        self.crawler = crawler or policy_crawler()
+
     def fetch(self) -> list[Record]:
         records = []
         for title, url, published, publisher in self.PAGES:
-            response = requests.get(url, timeout=float(os.getenv("REQUEST_TIMEOUT", "12")), headers={"User-Agent": "MiningIntelDemo/1.0"})
-            response.raise_for_status()
-            parser = _HTMLText()
-            parser.feed(response.text)
-            text = re.sub(r"\s+", " ", " ".join(parser.parts)).strip()
-            records.append(Record(_id("policy", url), "policy", title, text[:1800], published, publisher, url))
+            result = self.crawler.crawl(url)
+            log.info("policy_source_done url=%s engine=%s success=%s visited=%d chars=%d", url, result.engine, result.success, len(result.visited_urls), len(result.text))
+            if not result.success:
+                log.warning("policy_source_unavailable url=%s error=%s", url, result.error)
+                continue
+            records.append(Record(_id("policy", url), "policy", title, result.text[:5000], published, publisher, url))
+        if not records:
+            raise RuntimeError("all official policy pages failed; provider cache/sample fallback will be used")
         return records
 
 
@@ -140,17 +145,6 @@ class OfficialCSVPriceProvider:
                 url = (row.get("url") or self.source_url).strip()
                 out.append(Record(_id("price", f"{self.name}:{commodity}:{day}"), "price", f"{commodity} reference price", f"Official/vendor CSV market data for {commodity}.", day, source, url, commodity, value, unit))
         return out
-
-
-class _HTMLText(HTMLParser):
-    def __init__(self):
-        super().__init__(); self.parts = []; self.hidden_depth = 0
-    def handle_starttag(self, tag, attrs):
-        if tag in {"script", "style", "noscript"}: self.hidden_depth += 1
-    def handle_endtag(self, tag):
-        if tag in {"script", "style", "noscript"} and self.hidden_depth: self.hidden_depth -= 1
-    def handle_data(self, data):
-        if not self.hidden_depth and data.strip(): self.parts.append(data.strip())
 
 
 def default_providers() -> list[Provider]:

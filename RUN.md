@@ -29,6 +29,15 @@ python backend/pipeline/ingest.py
 
 采集结果保存到 `storage/data.json`，Provider 缓存保存在 `storage/cache/`。网页 API `POST /ingest` 也可触发刷新。某个来源失败时会使用该来源上次缓存；首次失败时使用对应的离线样例。
 
+官方政策页默认使用轻量 `requests` 抓取；遇到 HTTP 错误或正文过短时自动尝试 Crawl4AI。Crawl4AI 是可选依赖，需要浏览器渲染兜底时额外安装：
+
+```powershell
+python -m pip install -r requirements-crawl4ai.txt
+crawl4ai-setup
+```
+
+`POLICY_CRAWLER_ENGINE` 可设为 `hybrid`（默认）、`requests` 或 `crawl4ai`。`POLICY_CRAWL_MAX_PAGES`、`POLICY_CRAWL_MAX_DEPTH`、`POLICY_CRAWL_TIMEOUT` 和 `POLICY_CRAWL_MIN_TEXT` 控制同域采集范围及正文门槛。未安装或初始化 Crawl4AI 时，失败会继续走现有 Provider 缓存和样例兜底。
+
 如有权使用交易所或授权供应商的历史行情 CSV，可分别保存为 `storage/imports/lme.csv`、`storage/imports/shfe.csv`，列名为 `date,commodity,value,unit`，可选 `source,url`。日期使用 `YYYY-MM-DD`，`value` 使用数值，`unit` 写明币种和计量单位。导入后运行 `python backend/pipeline/ingest.py`。不要把不同合约、来源或单位的数据直接拼成一条价格序列。
 
 ## 演示步骤

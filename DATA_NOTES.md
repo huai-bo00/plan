@@ -12,6 +12,8 @@
 
 Yahoo Finance 公共行情代码不保证对应 LME/SHFE 官方结算价，默认可用公开 chart 数据只用于辅助演示；真实交易所报价以有权使用的交易所/授权供应商 CSV 为准，不可将不同币种或单位的价格直接比较。演示样例中的碳酸锂和铜走势是**合成数据**，只用于本地演示和测试，不是历史或实时市场事实。
 
+官方政策页面由受限混合爬虫读取：默认先用 `requests` + BeautifulSoup 清洗静态 HTML，仅跟随同域、政策相关链接，并按 `POLICY_CRAWL_MAX_PAGES` / `POLICY_CRAWL_MAX_DEPTH` 限制范围。HTTP 错误或正文少于 `POLICY_CRAWL_MIN_TEXT` 时，若安装了可选依赖则降级到 Crawl4AI；两种方式均失败时沿用该 Provider 的 JSON 缓存和离线样例。默认依赖不包含浏览器运行时。需要启用浏览器兜底时执行 `pip install -r requirements-crawl4ai.txt`，并按 Crawl4AI 指引初始化浏览器；也可将 `POLICY_CRAWLER_ENGINE` 设为 `requests` 或 `crawl4ai`。采集不尝试绕过访问控制。
+
 ## 统一记录字段
 
 每条记录包含 `id`、`category`（`news` / `policy` / `price`）、`title`、`content`、`published_at`（ISO 日期）、`source`、`url` 和 `data_quality`。价格记录额外包含 `commodity`、数值 `value` 和带币种/计量单位的 `unit`。
@@ -21,6 +23,7 @@ Yahoo Finance 公共行情代码不保证对应 LME/SHFE 官方结算价，默�
 - 标题和正文压缩连续空白；发布时间规范为 ISO 日期；价格数值转成有限小数并保留 Provider 给出的单位。
 - 新闻和政策有 URL 时按去除末尾斜线后的 URL 去重；价格按来源、商品、日期和单位区分，避免把不同交易所或计价单位的数据误合并。
 - 每个 Provider 使用独立 JSON 缓存，临时文件写入后原子替换。Provider 失败时先读该 Provider 缓存；首次失败时使用带 `illustrative` 标志的离线演示数据。
+- HTML 清洗优先提取 `main` / `article`，删除脚本、导航、页眉页脚、表单及常见分享/评论区域；同域页面爬取受页面数和深度限制。
 - `storage/demo_data.json` 中的 120 条示例含 30 条新闻、30 条政策、30 条碳酸锂价格和 30 条铜价记录，标题或来源清楚标明虚构/合成。
 
 ## 评估定义
