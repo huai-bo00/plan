@@ -1,0 +1,17 @@
+.venv/
+.venv-demo/
+.runtime-packages/
+.tmp/
+__pycache__/
+.pytest_cache/
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+.DS_Store
+storage/cache/
+storage/memory.sqlite3
+storage/memory.sqlite3-shm
+storage/memory.sqlite3-wal
+storage/ingested.json

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7f3"><title>矿业情报问答台</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/"><span class="brand-mark">M</span><span>MINING INTEL <small>矿业情报问答台</small></span></a><div class="header-meta"><span class="live-dot"></span> 本地演示环境 <span id="record-count" class="count-pill">读取数据中</span></div></header>
+  <main class="shell">
+    <section class="hero"><div class="eyebrow">MARKET · POLICY · NEWS</div><h1>把矿业动态，<br><em>变成可追溯的判断。</em></h1><p>向情报助手提问，查看市场变化、政策动向和新闻证据。</p></section>
+    <section class="config-panel" id="llm-config" aria-label="模型配置">
+      <div class="config-heading"><strong>模型配置</strong><small id="llm-status">规则问答模式</small></div>
+      <form id="llm-form" class="config-form">
+        <label class="key-field">API Key<input id="llm-api-key" type="password" placeholder="粘贴 API Key" autocomplete="new-password"></label>
+        <div class="config-actions"><span id="llm-config-message" aria-live="polite">保存后启用 LLM。Key 保存在本机项目的 .env 文件中。</span><button type="submit" id="save-llm">保存并启用</button></div>
+      </form>
+    </section>
+    <section class="search-panel"><label for="question">你想了解什么？</label><div class="input-row"><textarea id="question" rows="2" placeholder="例如：过去 7 天锂价有什么变化？有哪些相关政策或新闻？"></textarea><button id="ask" type="button"><span>查询</span><span class="arrow">↗</span></button></div><div class="quick-prompts"><span>试试：</span><button data-question="过去 7 天锂价有什么变化？有哪些相关政策或新闻？">锂价与政策</button><button data-question="最近 30 天铜价走势如何？">铜价走势</button><button data-question="过去 14 天有哪些关键矿产政策？">关键矿产政策</button></div></section>
+    <section class="memory-panel" aria-label="对话记忆"><div class="memory-heading"><div><strong>对话记忆</strong><small id="memory-status">本浏览器最近对话</small></div><button id="clear-memory" type="button">清除记忆</button></div><div id="memory-turns" class="memory-turns"><p class="memory-empty">还没有保存的对话。</p></div></section>
+    <section id="result" class="result hidden" aria-live="polite">
+      <div class="result-head"><div><div class="eyebrow">QUERY RESULT</div><h2>情报摘要</h2></div><span id="range" class="range"></span></div>
+      <article class="answer-card"><div class="answer-icon">✳</div><div><div class="card-label">综合判断</div><p id="answer"></p></div></article>
+      <section id="price-section" class="price-section hidden"><div class="result-head compact"><div><div class="eyebrow">PRICE MOVEMENT</div><h3>价格变化</h3></div><span id="price-quality" class="quality"></span></div><div id="price-card" class="price-card"></div></section>
+      <section class="sources-section"><div class="result-head compact"><div><div class="eyebrow">EVIDENCE</div><h3>参考来源</h3></div><span id="source-count" class="range"></span></div><div id="sources" class="sources-grid"></div><div id="empty-sources" class="empty-note hidden">本次查询没有匹配到可引用的资料。</div></section>
+      <footer class="trace">TRACE <code id="trace"></code><span id="timing"></span></footer>
+    </section>
+    <section id="error" class="error hidden"></section>
+    <div id="loading" class="loading hidden"><span class="spinner"></span> 正在检索资料并计算价格变化…</div>
+    <footer class="page-foot">结果基于检索到的资料生成。演示样例与实时采集数据会明确标识。<a href="/docs" target="_blank">API 文档 ↗</a></footer>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

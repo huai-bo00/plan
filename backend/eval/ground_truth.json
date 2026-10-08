@@ -1,0 +1,22 @@
+[
+  {"question":"过去 7 天锂价有什么变化？有哪些相关政策或新闻？","relevant_ids":["demo_news_30","demo_policy_30","demo_price_lithium_24","demo_price_lithium_30"]},
+  {"question":"最近 30 天碳酸锂价格走势","relevant_ids":["demo_price_lithium_01","demo_price_lithium_30"]},
+  {"question":"过去 14 天铜价涨跌幅是多少？","relevant_ids":["demo_price_copper_17","demo_price_copper_30"]},
+  {"question":"最近 7 天有哪些关键矿产政策动态？","relevant_ids":["demo_policy_26"]},
+  {"question":"过去 30 天锂矿行业新闻有哪些？","relevant_ids":["demo_news_26","demo_news_21"]},
+  {"question":"最近 21 天资源安全政策有什么进展？","relevant_ids":["demo_policy_28","demo_policy_23"]},
+  {"question":"过去 10 天电池材料新闻","relevant_ids":["demo_news_27","demo_news_22"]},
+  {"question":"最近 30 天的铜期货价格变化","relevant_ids":["demo_price_copper_01","demo_price_copper_30"]},
+  {"question":"过去 7 天清洁能源关键矿产政策","relevant_ids":["demo_policy_29","demo_policy_26"]},
+  {"question":"最近 14 天锂矿供应链新闻","relevant_ids":["demo_news_30","demo_news_26"]},
+  {"question":"过去 30 天锂价趋势如何","relevant_ids":["demo_price_lithium_01","demo_price_lithium_30"]},
+  {"question":"最近 5 天矿业投资新闻","relevant_ids":["demo_news_28"]},
+  {"question":"过去 12 天矿业许可政策","relevant_ids":["demo_policy_27","demo_policy_22"]},
+  {"question":"最近 30 天铜价有什么变化，同时有哪些新闻？","relevant_ids":["demo_price_copper_01","demo_price_copper_30","demo_news_30"]},
+  {"question":"过去 7 天锂价及关键矿产政策","relevant_ids":["demo_price_lithium_24","demo_price_lithium_30","demo_policy_26"]},
+  {"question":"最近 20 天锂矿资源开发新闻","relevant_ids":["demo_news_29","demo_news_24"]},
+  {"question":"过去 30 天循环利用相关政策","relevant_ids":["demo_policy_30","demo_policy_25"]},
+  {"question":"最近 9 天电池材料和锂价变化","relevant_ids":["demo_price_lithium_22","demo_price_lithium_30","demo_news_27","demo_news_22"]},
+  {"question":"过去 16 天关键矿产供应链新闻与政策","relevant_ids":["demo_news_30","demo_news_25","demo_policy_26","demo_policy_21"]},
+  {"question":"最近 30 天电池材料新闻和碳酸锂价格变化","relevant_ids":["demo_news_27","demo_news_22","demo_price_lithium_01","demo_price_lithium_30"]}
+]
