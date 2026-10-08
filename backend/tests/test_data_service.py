@@ -40,7 +40,8 @@ def test_illustrative_fixture_rolls_to_current_date(tmp_path):
     assert newest_demo_day == date.today()
 
 
-def test_query_computes_price_range_and_cites_sources():
+def test_query_computes_price_range_and_cites_sources(monkeypatch):
+    monkeypatch.setenv("RAG_ENABLED", "false")
     today = date(2026, 10, 8)
     records = [
         rec("p1", "price", "Lithium close", today.replace(day=2), commodity="lithium carbonate", value=100, unit="CNY/t"),
@@ -55,7 +56,8 @@ def test_query_computes_price_range_and_cites_sources():
     assert result["answer_evidence"]
 
 
-def test_follow_up_uses_last_question_as_memory_context():
+def test_follow_up_uses_last_question_as_memory_context(monkeypatch):
+    monkeypatch.setenv("RAG_ENABLED", "false")
     today = date(2026, 10, 8)
     records = [
         rec("p1", "price", "Lithium close", today.replace(day=2), commodity="lithium carbonate", value=100, unit="CNY/t"),
@@ -72,11 +74,40 @@ def test_query_abstains_when_no_evidence():
     assert "没有找到足够" in result["answer"]
 
 
-def test_langgraph_query_nodes_and_timings():
+def test_langgraph_query_nodes_and_timings(monkeypatch):
+    monkeypatch.setenv("RAG_ENABLED", "false")
     result = run_query("过去 7 天锂价有什么变化？有哪些相关政策或新闻？", now=date(2026, 10, 8))
     assert result["meta"]["graph_nodes"] == ["parse_query", "retrieve_evidence", "calculate_price", "compose_answer", "optional_llm", "finalize"]
     assert set(result["meta"]["timings_ms"]) == {*result["meta"]["graph_nodes"], "total"}
     assert {node.name for node in QUERY_GRAPH.get_graph().nodes.values()} >= set(result["meta"]["graph_nodes"])
+
+
+def test_rag_node_runs_for_mining_knowledge_question(monkeypatch):
+    import app.service as service
+
+    monkeypatch.setenv("RAG_ENABLED", "true")
+    monkeypatch.setenv("LLM_API_KEY", "embedding-test-key")
+    monkeypatch.setenv("LLM_ENABLED", "false")
+    monkeypatch.setattr(service, "retrieve_rag", lambda query, records, k: [{
+        "id": "policy-1", "type": "policy", "title": "锂矿政策知识", "snippet": "锂矿项目需要依法办理许可。",
+        "date": "2026-10-08", "source": "示例法规", "url": "https://example.test/policy",
+        "data_quality": "live", "distance": 0.12,
+    }])
+    result = run_query("锂矿项目需要哪些许可？", records=[], now=date(2026, 10, 8))
+    assert "rag_retrieve" in result["meta"]["graph_nodes"]
+    assert result["meta"]["rag_count"] == 1
+    assert result["sources"][0]["title"] == "锂矿政策知识"
+    assert "依法办理许可" in result["answer"]
+
+
+def test_unrelated_general_question_bypasses_rag(monkeypatch):
+    import app.service as service
+
+    monkeypatch.setenv("RAG_ENABLED", "true")
+    monkeypatch.setattr(service, "retrieve_rag", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("RAG should be bypassed")))
+    result = run_query("太阳系最大的行星是什么？", records=[], now=date(2026, 10, 8))
+    assert "rag_retrieve" not in result["meta"]["graph_nodes"]
+    assert result["meta"]["rag_status"] == "not_needed"
 
 
 def test_general_qa_uses_llm_and_memory_context(monkeypatch):

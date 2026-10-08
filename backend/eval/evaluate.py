@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend"))
 os.environ["LLM_ENABLED"] = "false"
+os.environ["RAG_ENABLED"] = "false"
 
 from app.data import load_records
 from app.service import run_query

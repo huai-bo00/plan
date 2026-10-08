@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 from starlette.requests import Request
 
-from app.main import LLMSettingsRequest, QueryRequest, app, delete_memory, get_llm_settings, health, index, query, read_memory, save_llm_settings
+from app.main import LLMSettingsRequest, QueryRequest, RAGSettingsRequest, app, delete_memory, get_llm_settings, get_rag_settings, health, index, query, read_memory, save_llm_settings, save_rag_settings
 
 
 def test_health_and_query_handlers(tmp_path, monkeypatch):
@@ -19,6 +19,8 @@ def test_health_and_query_handlers(tmp_path, monkeypatch):
     assert read_memory("test_session")["turns"] == []
     routes = {(route.path, method) for route in app.routes for method in getattr(route, "methods", set())}
     assert ("/query", "POST") in routes
+    assert ("/api/settings/rag", "GET") in routes
+    assert ("/api/settings/rag", "PUT") in routes
     assert ("/api/memory", "GET") in routes
     assert ("/api/memory", "DELETE") in routes
 
@@ -48,3 +50,24 @@ def test_llm_settings_are_saved_without_returning_secret(tmp_path, monkeypatch):
     assert "secret-test-key" in env_text
     assert "LLM_ENABLED='true'" in env_text
     monkeypatch.delenv("LLM_API_KEY", raising=False)
+
+
+def test_rag_key_is_saved_separately_without_returning_secret(tmp_path, monkeypatch):
+    import app.main as main
+    import os
+
+    monkeypatch.setattr(main, "ROOT", tmp_path)
+    previous_rag_key = os.environ.get("RAG_API_KEY")
+    monkeypatch.delenv("RAG_API_KEY", raising=False)
+    monkeypatch.setenv("LLM_API_KEY", "chat-key")
+    result = save_rag_settings(RAGSettingsRequest(api_key="embedding-secret"))
+    assert result["saved"] is True
+    assert "embedding-secret" not in str(result)
+    assert get_rag_settings() == {"key_configured": True, "llm_fallback_available": True}
+    env_text = (tmp_path / ".env").read_text(encoding="utf-8")
+    assert "RAG_API_KEY='embedding-secret'" in env_text
+    assert "LLM_API_KEY='embedding-secret'" not in env_text
+    if previous_rag_key is None:
+        os.environ.pop("RAG_API_KEY", None)
+    else:
+        os.environ["RAG_API_KEY"] = previous_rag_key

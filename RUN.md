@@ -62,12 +62,18 @@ python -m pytest backend/tests
 
 也可在首页展开“模型配置”面板填写 API Key，保存后启用 LLM。默认使用 OpenAI API 和 `gpt-4o-mini`；如使用兼容服务，可在 `.env` 中调整 `LLM_BASE_URL` 与 `LLM_MODEL`。配置保存到项目根目录 `.env`，当前服务立即生效；页面不会回显已保存的 Key。不要将 `.env` 提交到版本控制。
 
+## RAG 向量检索
+
+矿种、矿业、新闻和政策等领域问题会经过独立的 LangGraph `rag_retrieve` 节点。普通常识问题会跳过 RAG，直接交给 LLM。RAG 使用本地 Chroma 持久化向量库，自动将新闻/政策记录与 `storage/knowledge/` 下的 `.md`、`.txt` 文档切分后索引；数据变化后在下一次领域查询时重建索引。来源信息会随检索片段返回。
+
+向量化通过 OpenAI-compatible Embeddings API 完成，首页“向量化配置”可单独填写 Embedding API Key；未填写时回退复用模型 Key。默认模型为 `text-embedding-3-small`。所用服务商必须支持 embeddings 接口和该模型；如需调整，在 `.env` 设置 `RAG_EMBEDDING_BASE_URL`、`RAG_EMBEDDING_MODEL`。Key 单独保存在项目根目录 `.env`，页面不会回显。没有 Key、缺少 Chroma 或 embedding 请求失败时，RAG 节点会跳过/报状态并继续现有规则检索与 LLM 链路。索引文件保存在 `storage/chroma/`，不会提交到 Git。
+
 ## LangGraph 问答流程
 
-问答由 LangGraph `StateGraph` 编排，节点按顺序执行：
+问答由 LangGraph `StateGraph` 编排，按条件经过以下节点：
 
 ```text
-parse_query → retrieve_evidence → calculate_price → compose_answer → optional_llm → finalize
+parse_query → (rag_retrieve 可选) → retrieve_evidence → calculate_price → compose_answer → optional_llm → finalize
 ```
 
 每个节点会记录耗时；响应的 `meta.graph_nodes` 列出实际流程节点，`meta.timings_ms` 包含逐节点和总耗时。数据采集属于独立的离线/手动刷新流程，不在每次问答时触发。

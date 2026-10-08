@@ -6,11 +6,15 @@ const errorBox = document.querySelector('#error');
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const llmForm = document.querySelector('#llm-form');
 const llmMessage = document.querySelector('#llm-config-message');
+const ragForm = document.querySelector('#rag-form');
+const ragMessage = document.querySelector('#rag-config-message');
 const memoryTurns = document.querySelector('#memory-turns');
 const sessionId = getSessionId();
 loadLLMSettings();
+loadRAGSettings();
 loadMemory();
 llmForm.addEventListener('submit', saveLLMSettings);
+ragForm.addEventListener('submit', saveRAGSettings);
 document.querySelector('#clear-memory').addEventListener('click', clearMemory);
 
 document.querySelectorAll('[data-question]').forEach(button => button.addEventListener('click', () => { question.value = button.dataset.question; submit(); }));
@@ -36,11 +40,11 @@ function render(data) {
   document.querySelector('#answer').textContent = data.answer;
   document.querySelector('#range').textContent = `${data.time_range.start} — ${data.time_range.end}`;
   document.querySelector('#trace').textContent = data.trace_id;
-  document.querySelector('#timing').textContent = `${data.meta.timings_ms.total} ms${data.meta.llm_used ? ' · LLM' : ' · RULES'}`;
+  document.querySelector('#timing').textContent = `${data.meta.timings_ms.total} ms${data.meta.rag_status === 'ok' ? ' · RAG' : ''}${data.meta.llm_used ? ' · LLM' : ' · RULES'}`;
   const sources = data.sources || [];
   document.querySelector('#source-count').textContent = `${sources.length} 条资料`;
   document.querySelector('#empty-sources').classList.toggle('hidden', sources.length > 0);
-  document.querySelector('#sources').innerHTML = sources.map(s => `<article class="source-card"><div class="source-top"><span class="tag ${esc(s.type)}">${esc(typeLabel(s.type))}</span><span class="source-date">${esc(s.date)}</span></div>${s.url ? `<a class="source-title" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)} ↗</a>` : `<span class="source-title">${esc(s.title)}</span>`}<p class="source-snippet">${esc(s.snippet)}</p><div class="source-foot">${esc(s.source)}${s.data_quality !== 'live' ? ' · <span class="demo-label">演示样例</span>' : ''}</div></article>`).join('');
+  document.querySelector('#sources').innerHTML = sources.map(s => `<article class="source-card"><div class="source-top"><span class="tag ${esc(s.type)}">${esc(typeLabel(s.type))}</span><span class="source-date">${esc(s.date)}</span></div>${s.url ? `<a class="source-title" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)} ↗</a>` : `<span class="source-title">${esc(s.title)}</span>`}<p class="source-snippet">${esc(s.snippet)}</p><div class="source-foot">${esc(s.source)}${s.data_quality === 'illustrative' ? ' · <span class="demo-label">演示样例</span>' : ''}</div></article>`).join('');
   const trend = data.price_change;
   const section = document.querySelector('#price-section');
   section.classList.toggle('hidden', !trend);
@@ -59,7 +63,7 @@ function render(data) {
   }
   result.classList.remove('hidden'); result.scrollIntoView({behavior:'smooth', block:'start'});
 }
-function typeLabel(type) { return ({news:'新闻',policy:'政策',price:'价格'})[type] || type; }
+function typeLabel(type) { return ({news:'新闻',policy:'政策',price:'价格',knowledge:'知识库'})[type] || type; }
 
 fetch('/api/stats').then(r=>r.json()).then(s=>document.querySelector('#record-count').textContent=`${s.total} 条记录`).catch(()=>{});
 
@@ -85,6 +89,31 @@ async function saveLLMSettings(event) {
     await loadLLMSettings();
     llmMessage.textContent = payload.message;
   } catch (error) { llmMessage.textContent = error.message || '保存失败'; }
+  finally { button.disabled = false; }
+}
+
+async function loadRAGSettings() {
+  try {
+    const response = await fetch('/api/settings/rag');
+    if (!response.ok) throw new Error('读取向量化配置失败');
+    const settings = await response.json();
+    document.querySelector('#rag-api-key').placeholder = settings.key_configured ? '已保存独立 Key；留空保持不变' : '粘贴向量化服务 API Key';
+    document.querySelector('#rag-status').textContent = settings.key_configured ? '已配置独立 Embedding Key' : settings.llm_fallback_available ? '使用模型 Key 兜底' : '尚未配置向量化 Key';
+  } catch (error) { ragMessage.textContent = error.message || '无法读取向量化配置'; }
+}
+
+async function saveRAGSettings(event) {
+  event.preventDefault();
+  const button = document.querySelector('#save-rag');
+  button.disabled = true; ragMessage.textContent = '正在保存…';
+  try {
+    const response = await fetch('/api/settings/rag', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({api_key:document.querySelector('#rag-api-key').value})});
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || '保存失败');
+    document.querySelector('#rag-api-key').value = '';
+    await loadRAGSettings();
+    ragMessage.textContent = payload.message;
+  } catch (error) { ragMessage.textContent = error.message || '保存失败'; }
   finally { button.disabled = false; }
 }
 

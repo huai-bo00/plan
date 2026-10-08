@@ -18,6 +18,10 @@ Yahoo Finance 公共行情代码不保证对应 LME/SHFE 官方结算价，默�
 
 每条记录包含 `id`、`category`（`news` / `policy` / `price`）、`title`、`content`、`published_at`（ISO 日期）、`source`、`url` 和 `data_quality`。价格记录额外包含 `commodity`、数值 `value` 和带币种/计量单位的 `unit`。
 
+## RAG 向量索引
+
+LangGraph 对矿业领域问题调用独立 `rag_retrieve` 节点；一般常识问题跳过向量库并交给 LLM。Chroma 索引包含新闻和政策记录，以及可选的 `storage/knowledge/*.md`、`*.txt` 本地知识文档；价格记录不入向量索引，继续使用确定性行情计算。文本按 `RAG_CHUNK_SIZE` / `RAG_CHUNK_OVERLAP` 切分，Embedding 通过 `RAG_EMBEDDING_BASE_URL` 与 `RAG_EMBEDDING_MODEL` 指定的 OpenAI-compatible 接口生成。首页可单独设置 `RAG_API_KEY`，未设置时回退使用 `LLM_API_KEY`。向量数据持久化在 `storage/chroma/`，语料哈希未变化时复用，变化后重新向量化。Embedding API 或 Chroma 不可用时记录 `rag_status`，继续规则检索与可选 LLM。
+
 ## 规范化、去重与缓存
 
 - 标题和正文压缩连续空白；发布时间规范为 ISO 日期；价格数值转成有限小数并保留 Provider 给出的单位。

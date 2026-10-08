@@ -11,6 +11,8 @@ __pycache__/
 .vscode/
 .DS_Store
 storage/cache/
+storage/chroma/
+storage/knowledge/
 storage/memory.sqlite3
 storage/memory.sqlite3-shm
 storage/memory.sqlite3-wal

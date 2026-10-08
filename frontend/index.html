@@ -9,11 +9,16 @@
   <header class="topbar"><a class="brand" href="/"><span class="brand-mark">M</span><span>MINING INTEL <small>矿业情报问答台</small></span></a><div class="header-meta"><span class="live-dot"></span> 本地演示环境 <span id="record-count" class="count-pill">读取数据中</span></div></header>
   <main class="shell">
     <section class="hero"><div class="eyebrow">MARKET · POLICY · NEWS</div><h1>把矿业动态，<br><em>变成可追溯的判断。</em></h1><p>向情报助手提问，查看市场变化、政策动向和新闻证据。</p></section>
-    <section class="config-panel" id="llm-config" aria-label="模型配置">
+    <section class="config-panel" id="llm-config" aria-label="模型与向量化配置">
       <div class="config-heading"><strong>模型配置</strong><small id="llm-status">规则问答模式</small></div>
       <form id="llm-form" class="config-form">
         <label class="key-field">API Key<input id="llm-api-key" type="password" placeholder="粘贴 API Key" autocomplete="new-password"></label>
-        <div class="config-actions"><span id="llm-config-message" aria-live="polite">保存后启用 LLM。Key 保存在本机项目的 .env 文件中。</span><button type="submit" id="save-llm">保存并启用</button></div>
+        <div class="config-actions"><span id="llm-config-message" aria-live="polite">用于 LLM 问答，Key 保存在本机项目的 .env 文件中。</span><button type="submit" id="save-llm">保存并启用</button></div>
+      </form>
+      <div class="config-heading"><strong>向量化配置</strong><small id="rag-status">读取配置中</small></div>
+      <form id="rag-form" class="config-form">
+        <label class="key-field">Embedding API Key<input id="rag-api-key" type="password" placeholder="粘贴向量化服务 API Key" autocomplete="new-password"></label>
+        <div class="config-actions"><span id="rag-config-message" aria-live="polite">单独配置向量化 Key；未配置时会回退使用模型 Key。</span><button type="submit" id="save-rag">保存向量 Key</button></div>
       </form>
     </section>
     <section class="search-panel"><label for="question">你想了解什么？</label><div class="input-row"><textarea id="question" rows="2" placeholder="例如：过去 7 天锂价有什么变化？有哪些相关政策或新闻？"></textarea><button id="ask" type="button"><span>查询</span><span class="arrow">↗</span></button></div><div class="quick-prompts"><span>试试：</span><button data-question="过去 7 天锂价有什么变化？有哪些相关政策或新闻？">锂价与政策</button><button data-question="最近 30 天铜价走势如何？">铜价走势</button><button data-question="过去 14 天有哪些关键矿产政策？">关键矿产政策</button></div></section>

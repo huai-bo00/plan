@@ -38,6 +38,10 @@ class LLMSettingsRequest(BaseModel):
     api_key: str = Field(default="", max_length=2000)
 
 
+class RAGSettingsRequest(BaseModel):
+    api_key: str = Field(default="", max_length=2000)
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     return templates.TemplateResponse(request=request, name="index.html", context={})
@@ -109,7 +113,30 @@ def save_llm_settings(body: LLMSettingsRequest):
     except OSError as exc:
         logging.getLogger("mining_demo").exception("llm_settings_save_failed")
         raise HTTPException(status_code=500, detail="配置写入失败，请检查项目目录权限。") from exc
-    return {"saved": True, "enabled": True, "message": "LLM 已启用；新设置已生效。"}
+    return {"saved": True, "enabled": True, "message": "LLM 已启用；向量化 Key 可单独配置。"}
+
+
+@app.get("/api/settings/rag")
+def get_rag_settings():
+    return {
+        "key_configured": bool(os.getenv("RAG_API_KEY", "")),
+        "llm_fallback_available": bool(os.getenv("LLM_API_KEY", "")),
+    }
+
+
+@app.put("/api/settings/rag")
+def save_rag_settings(body: RAGSettingsRequest):
+    api_key = body.api_key.strip()
+    if not api_key and not os.getenv("RAG_API_KEY"):
+        raise HTTPException(status_code=422, detail="请填写向量化服务 API Key。")
+    if api_key:
+        try:
+            set_key(str(ROOT / ".env"), "RAG_API_KEY", api_key, quote_mode="always")
+            os.environ["RAG_API_KEY"] = api_key
+        except OSError as exc:
+            logging.getLogger("mining_demo").exception("rag_settings_save_failed")
+            raise HTTPException(status_code=500, detail="配置写入失败，请检查项目目录权限。") from exc
+    return {"saved": True, "message": "向量化 API Key 已单独保存；不会回显 Key。"}
 
 
 @app.get("/api/memory")
