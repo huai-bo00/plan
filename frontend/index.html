@@ -9,6 +9,12 @@
   <header class="topbar"><a class="brand" href="/"><span class="brand-mark">M</span><span>MINING INTEL <small>矿业情报问答台</small></span></a><div class="header-meta"><span class="live-dot"></span> 本地演示环境 <span id="record-count" class="count-pill">读取数据中</span></div></header>
   <main class="shell">
     <section class="hero"><div class="eyebrow">MARKET · POLICY · NEWS</div><h1>把矿业动态，<br><em>变成可追溯的判断。</em></h1><p>向情报助手提问，查看市场变化、政策动向和新闻证据。</p></section>
+    <section class="ingest-panel" aria-label="刷新采集数据">
+      <div class="ingest-copy"><span class="ingest-eyebrow">DATA PIPELINE</span><strong>刷新数据</strong><small>更新新闻、政策与行情</small></div>
+      <button id="refresh-data" type="button"><span class="ingest-button-label">开始采集</span><span aria-hidden="true">↗</span></button>
+      <div id="ingest-status" class="ingest-status hidden" aria-live="polite"></div>
+      <div id="ingest-details" class="ingest-details hidden" aria-live="polite"></div>
+    </section>
     <section class="config-panel" id="llm-config" aria-label="模型与向量化配置">
       <div class="config-heading"><strong>模型配置</strong><small id="llm-status">规则问答模式</small></div>
       <form id="llm-form" class="config-form">

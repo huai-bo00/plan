@@ -8,6 +8,9 @@ const llmForm = document.querySelector('#llm-form');
 const llmMessage = document.querySelector('#llm-config-message');
 const ragForm = document.querySelector('#rag-form');
 const ragMessage = document.querySelector('#rag-config-message');
+const refreshDataButton = document.querySelector('#refresh-data');
+const ingestStatus = document.querySelector('#ingest-status');
+const ingestDetails = document.querySelector('#ingest-details');
 const memoryTurns = document.querySelector('#memory-turns');
 const sessionId = getSessionId();
 loadLLMSettings();
@@ -16,6 +19,7 @@ loadMemory();
 llmForm.addEventListener('submit', saveLLMSettings);
 ragForm.addEventListener('submit', saveRAGSettings);
 document.querySelector('#clear-memory').addEventListener('click', clearMemory);
+refreshDataButton.addEventListener('click', refreshData);
 
 document.querySelectorAll('[data-question]').forEach(button => button.addEventListener('click', () => { question.value = button.dataset.question; submit(); }));
 askButton.addEventListener('click', submit);
@@ -66,6 +70,35 @@ function render(data) {
 function typeLabel(type) { return ({news:'新闻',policy:'政策',price:'价格',knowledge:'知识库'})[type] || type; }
 
 fetch('/api/stats').then(r=>r.json()).then(s=>document.querySelector('#record-count').textContent=`${s.total} 条记录`).catch(()=>{});
+
+async function refreshData() {
+  refreshDataButton.disabled = true;
+  refreshDataButton.querySelector('.ingest-button-label').textContent = '采集中…';
+  ingestDetails.classList.add('hidden');
+  ingestDetails.replaceChildren();
+  ingestStatus.classList.remove('hidden');
+  ingestStatus.textContent = '正在采集已配置的数据源，可能需要几十秒…';
+  try {
+    const response = await fetch('/ingest', {method:'POST'});
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || '数据采集失败');
+    const providers = payload.providers || [];
+    const labels = {ok:'成功', cached:'使用缓存', failed:'失败'};
+    ingestStatus.textContent = `采集完成：共 ${payload.records} 条记录 · ${payload.timings_ms?.total ?? '—'} ms · Trace ${payload.trace_id || '—'}`;
+    ingestDetails.innerHTML = providers.map(item => `<div class="ingest-provider"><span>${esc(item.provider)}</span><span class="ingest-result ${item.status === 'ok' ? 'success' : item.status === 'failed' ? 'failure' : 'cached'}">${labels[item.status] || esc(item.status)} · ${Number(item.count || 0)} 条</span></div>${item.error ? `<div class="ingest-error">${esc(item.error)}</div>` : ''}`).join('');
+    ingestDetails.classList.remove('hidden');
+    const statsResponse = await fetch('/api/stats');
+    if (statsResponse.ok) {
+      const stats = await statsResponse.json();
+      document.querySelector('#record-count').textContent = `${stats.total} 条记录`;
+    }
+  } catch (error) {
+    ingestStatus.textContent = error.message || '采集失败，请确认服务已启动。';
+  } finally {
+    refreshDataButton.disabled = false;
+    refreshDataButton.querySelector('.ingest-button-label').textContent = '开始采集';
+  }
+}
 
 async function loadLLMSettings() {
   try {
