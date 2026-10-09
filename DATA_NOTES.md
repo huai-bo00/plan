@@ -14,6 +14,10 @@ Yahoo Finance 公共行情代码不保证对应 LME/SHFE 官方结算价，默�
 
 官方政策页面由受限混合爬虫读取：默认先用 `requests` + BeautifulSoup 清洗静态 HTML，仅跟随同域、政策相关链接，并按 `POLICY_CRAWL_MAX_PAGES` / `POLICY_CRAWL_MAX_DEPTH` 限制范围。HTTP 错误或正文少于 `POLICY_CRAWL_MIN_TEXT` 时，若安装了可选依赖则降级到 Crawl4AI；两种方式均失败时沿用该 Provider 的 JSON 缓存和离线样例。默认依赖不包含浏览器运行时。需要启用浏览器兜底时执行 `pip install -r requirements-crawl4ai.txt`，并按 Crawl4AI 指引初始化浏览器；也可将 `POLICY_CRAWLER_ENGINE` 设为 `requests` 或 `crawl4ai`。采集不尝试绕过访问控制。
 
+## 采集触发时机
+
+数据源地址由默认 Provider 和环境变量预先配置。启动 Web 服务时不会自动爬取；问答请求也不会临时联网采集。用户可在首页点击“开始采集”调用 `POST /ingest`，或运行 `python backend/pipeline/ingest.py` 手动刷新。数据写入 `storage/data.json` 和 `storage/cache/`，之后的问答读取本地更新数据。新闻、政策或行情数据变化后，向量索引会在下一次相关领域问题查询时按语料哈希检查并按需重建。
+
 ## 统一记录字段
 
 每条记录包含 `id`、`category`（`news` / `policy` / `price`）、`title`、`content`、`published_at`（ISO 日期）、`source`、`url` 和 `data_quality`。价格记录额外包含 `commodity`、数值 `value` 和带币种/计量单位的 `unit`。

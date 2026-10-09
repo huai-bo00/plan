@@ -21,13 +21,15 @@ uvicorn serve.main:app --app-dir backend --reload
 
 ## 数据采集
 
-首次运行默认加载离线样例。需要刷新真实来源时，在项目根目录执行：
+启动 FastAPI 服务和提交问答都**不会自动爬取**。首次采集前页面使用 `storage/demo_data.json` 的离线样例。要抓取/刷新预先配置的新闻、政策和行情来源，可在首页“数据采集”卡片点击“开始采集”；页面会调用 `POST /ingest`，并显示各 Provider 的状态、记录数和耗时。采集完成后，后续问答会读取更新后的数据。
+
+也可以在项目根目录用命令行手动刷新：
 
 ```powershell
 python backend/pipeline/ingest.py
 ```
 
-采集结果保存到 `storage/data.json`，Provider 缓存保存在 `storage/cache/`。网页 API `POST /ingest` 也可触发刷新。某个来源失败时会使用该来源上次缓存；首次失败时使用对应的离线样例。
+采集结果保存到 `storage/data.json`，Provider 缓存保存在 `storage/cache/`。也可通过 API 文档页面的 `POST /ingest` 触发刷新。某个来源失败时会使用该来源上次缓存；首次失败时使用对应的离线样例。
 
 官方政策页默认使用轻量 `requests` 抓取；遇到 HTTP 错误或正文过短时自动尝试 Crawl4AI。Crawl4AI 是可选依赖，需要浏览器渲染兜底时额外安装：
 
